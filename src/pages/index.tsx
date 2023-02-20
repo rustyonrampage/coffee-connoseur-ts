@@ -7,35 +7,63 @@ import Card from "components/card";
 import CoffeeStores from "data/data.json";
 
 import CoffeeStore from "@/types/CoffeeStore";
+import fetchCoffeeStores from "lib/coffee-stores";
+import { MouseEventHandler, useEffect, useState } from "react";
+import useTrackLocation from "hooks/use-track.location";
+import { ACTION_TYPES, StoreContext } from "@/store/store-context";
+import { useContext } from "react";
 
 interface Props {
   coffeeStores: CoffeeStore[];
 }
 
 export async function getStaticProps(context: any) {
-  const options = {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-      Authorization: process.env.FOURSQUARE_API_KEY!,
-    },
-  };
-
-  const response = await fetch(
-    "https://api.foursquare.com/v3/places/search?query=Food&ll=30.286580%2C71.931984&limit=6",
-    options
-  );
-  const data = await response.json();
-  console.log("data is ", data);
+  const coffeeStores = await fetchCoffeeStores();
   return {
     props: {
-      coffeeStores: data.results,
+      coffeeStores,
     },
   };
 }
 
 export default function Home(props: Props) {
-  const { coffeeStores } = props;
+  // const { coffeeStores } = props;
+
+  // const [coffeeStores, setCoffeeStores] = useState([]);
+  const [coffeeStoresError, setCoffeeStoresError] = useState(null);
+  const { dispatch, state } = useContext(StoreContext) as any;
+  const { coffeeStores, latLong } = state;
+
+  const { handleTrackLocation, locationErrorMsg, isFindingLocation } =
+    useTrackLocation();
+
+  const handleOnBannerBtnClick = (e: React.MouseEvent<HTMLElement>) => {
+    handleTrackLocation();
+  };
+
+  const fetchStores = async (latLong: string, limit: number) => {
+    const fetchedCoffeeStores = await fetchCoffeeStores(latLong, limit);
+    dispatch({
+      type: ACTION_TYPES.SET_COFFEE_STORES,
+      payload: {
+        coffeeStores: fetchedCoffeeStores,
+      },
+    });
+  };
+  useEffect(() => {
+    console.log(latLong);
+    if (latLong) {
+      try {
+        fetchStores(latLong, 30);
+      } catch (error: any) {
+        setCoffeeStoresError(
+          error?.message || "Error has occured while fetching stores"
+        );
+      }
+    }
+  }, [latLong]);
+
+  console.log("props", props);
   return (
     <>
       <Head>
@@ -57,29 +85,56 @@ export default function Home(props: Props) {
         />
 
         <Banner
-          buttonText="View Stores Banner"
-          handleOnClick={() => console.log("asdsa")}
+          buttonText={isFindingLocation ? "Loading..." : "View Stores Banner"}
+          handleOnClick={handleOnBannerBtnClick}
         />
-        {coffeeStores?.length > 0 && (
-          <>
-            <h2 className={styles.heading2}>Toronot stores</h2>
-            <div className={styles.cardLayout}>
-              {coffeeStores.map((it) => {
-                return (
-                  <Card
-                    key={it.fsq_id}
-                    name={it.name}
-                    href={`/coffee-store/${it.fsq_id}`}
-                    imgUrl={
-                      it.imgUrl ||
-                      "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
-                    }
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
+        {locationErrorMsg && <p>Something went wrong: {locationErrorMsg}</p>}
+        {coffeeStoresError && <p>Something went wrong: {coffeeStoresError}</p>}
+
+        <div className={styles.sectionWrapper}>
+          {coffeeStores?.length > 0 && (
+            <>
+              <h2 className={styles.heading2}>Stores near me</h2>
+              <div className={styles.cardLayout}>
+                {coffeeStores?.map((it: CoffeeStore) => {
+                  return (
+                    <Card
+                      key={it.id}
+                      name={it.name}
+                      href={`/coffee-store/${it.id}`}
+                      imgUrl={
+                        it.imgUrl ||
+                        "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
+                      }
+                    />
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+        <div className={styles.sectionWrapper}>
+          {props.coffeeStores?.length > 0 && (
+            <>
+              <h2 className={styles.heading2}>NY stores</h2>
+              <div className={styles.cardLayout}>
+                {props.coffeeStores?.map((it: CoffeeStore) => {
+                  return (
+                    <Card
+                      key={it.id}
+                      name={it.name}
+                      href={`/coffee-store/${it.id}`}
+                      imgUrl={
+                        it.imgUrl ||
+                        "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
+                      }
+                    />
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
       </main>
     </>
   );

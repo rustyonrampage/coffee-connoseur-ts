@@ -3,14 +3,14 @@ import styles from "./banner.module.css";
 
 interface Props {
   buttonText: string;
-  handleOnClick: () => void;
+  handleOnClick: (e:  React.MouseEvent<HTMLElement>) => void;
 }
 
 export default function Banner(props: Props) {
-  const handleOnButtonClick: React.MouseEventHandler<HTMLButtonElement> = (
-    e
+  const handleOnButtonClick = (
+    e:  React.MouseEvent<HTMLElement>
   ) => {
-    props.handleOnClick();
+    props.handleOnClick(e);
   };
 
   return (

@@ -1,12 +1,16 @@
 import CoffeeStore from "@/pages/coffee-store/[id]";
 
 interface CoffeeStore {
-  fsq_id: string;
+  id: string;
   name: string;
   imgUrl: string;
   websiteUrl: string;
   address: string;
-  neighborhood: string;
+  neighbourhood: string;
+  location: {
+    address: string;
+    neighbourhood: string[]
+  }
 }
 
 export default CoffeeStore;
