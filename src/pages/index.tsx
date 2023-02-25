@@ -42,11 +42,14 @@ export default function Home(props: Props) {
   };
 
   const fetchStores = async (latLong: string, limit: number) => {
-    const fetchedCoffeeStores = await fetchCoffeeStores(latLong, limit);
+    const fetchedCoffeeStores = await fetch(
+      `/api/getCoffeeStoresByLocation?latLong=${latLong}&limit=30`
+    );
+    const resData = await fetchedCoffeeStores.json()
     dispatch({
       type: ACTION_TYPES.SET_COFFEE_STORES,
       payload: {
-        coffeeStores: fetchedCoffeeStores,
+        coffeeStores: resData,
       },
     });
   };
